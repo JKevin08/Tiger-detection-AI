@@ -11,11 +11,6 @@ import cv2
 from picamera2 import Picamera2
 from ultralytics import YOLO
 
-
-# ==================================================
-# CONFIGURATION
-# ==================================================
-
 MODEL_PATH = "/home/jude/yolo/models/best_ncnn_model"
 
 CONFIDENCE = 0.50
@@ -26,16 +21,13 @@ FPS = 30
 SAVE_DIR = Path.home() / "yolo" / "recordings"
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-# Preview is optional. Terminal updates always work.
+
 SHOW_PREVIEW = bool(
     os.environ.get("DISPLAY")
     or os.environ.get("WAYLAND_DISPLAY")
 )
 
 
-# ==================================================
-# GLOBAL STATE
-# ==================================================
 
 camera = None
 camera_started = False
@@ -48,9 +40,7 @@ no_tiger_since = None
 last_countdown_value = None
 
 
-# ==================================================
-# CHECK REQUIREMENTS
-# ==================================================
+
 
 if shutil.which("ffmpeg") is None:
     raise RuntimeError(
@@ -64,9 +54,7 @@ if not Path(MODEL_PATH).exists():
     )
 
 
-# ==================================================
-# LOAD TIGER MODEL
-# ==================================================
+
 
 print("[+] Loading tiger detection model...", flush=True)
 
@@ -93,9 +81,7 @@ if not tiger_ids:
     )
 
 
-# ==================================================
-# RECORDING FUNCTIONS
-# ==================================================
+
 
 def start_recording(frame):
     global recording, video_process, current_filename
@@ -116,7 +102,7 @@ def start_recording(frame):
         "-loglevel", "error",
         "-y",
 
-        # Read raw frames from Python.
+        #
         "-use_wallclock_as_timestamps", "1",
         "-f", "rawvideo",
         "-pixel_format", "bgr24",
@@ -124,7 +110,7 @@ def start_recording(frame):
         "-framerate", str(FPS),
         "-i", "pipe:0",
 
-        # Encode MP4 video.
+       
         "-an",
         "-c:v", "libx264",
         "-preset", "ultrafast",
@@ -165,7 +151,7 @@ def stop_recording():
     process = video_process
     filename = current_filename
 
-    # Clear state before finalizing the file.
+    
     video_process = None
     recording = False
     current_filename = None
@@ -214,9 +200,7 @@ def stop_recording():
                 process.wait()
 
 
-# ==================================================
-# MAIN PROGRAM
-# ==================================================
+
 
 try:
     print("[+] Opening Raspberry Pi camera...", flush=True)
@@ -252,7 +236,7 @@ try:
             time.sleep(0.1)
             continue
 
-        # Run NCNN inference.
+       
         result = model.predict(
             source=frame,
             conf=CONFIDENCE,
@@ -269,9 +253,7 @@ try:
 
         now = time.monotonic()
 
-        # ------------------------------------------
-        # TIGER DETECTED
-        # ------------------------------------------
+
 
         if tiger_detected:
             if not recording:
@@ -316,7 +298,7 @@ try:
                 math.ceil(STOP_DELAY - elapsed)
             )
 
-            # Print each countdown value only once.
+           
             if remaining != last_countdown_value:
                 print(
                     f"[COUNTDOWN] {remaining} "
@@ -333,9 +315,6 @@ try:
                 )
                 stop_recording()
 
-        # ------------------------------------------
-        # WRITE VIDEO FRAME
-        # ------------------------------------------
 
         display_frame = result.plot()
 
@@ -357,9 +336,7 @@ try:
                 )
                 stop_recording()
 
-        # ------------------------------------------
-        # OPTIONAL CAMERA PREVIEW
-        # ------------------------------------------
+ 
 
         if SHOW_PREVIEW:
             try:
@@ -386,7 +363,7 @@ except KeyboardInterrupt:
     print("\n[+] Stop requested by user.", flush=True)
 
 finally:
-    # Save/finalize any active recording on exit.
+    #
     if recording or video_process is not None:
         print("[+] Finalizing active recording...", flush=True)
         stop_recording()
